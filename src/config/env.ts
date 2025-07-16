@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const env = {
   server_port: parseInt(process.env.SERVER_PORT, 10),

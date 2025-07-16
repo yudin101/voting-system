@@ -8,4 +8,6 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  verbose: true,
+  setupFilesAfterEnv: ["./jest.setup.js"],
 };

@@ -2,8 +2,9 @@ import supertest, { SuperAgentTest } from "supertest";
 import app from "../src/app";
 import pool from "../src/config/db";
 import bcrypt from "bcrypt";
+import { newUser, existingUser } from "./constants";
 
-describe("Auth API Test", () => {
+describe("Auth API", () => {
   let agent: SuperAgentTest & ReturnType<typeof supertest.agent>;
 
   const loginExistingUser = async (): Promise<void> => {
@@ -17,19 +18,6 @@ describe("Auth API Test", () => {
         password: existingUser.password,
       })
       .expect(200);
-    console.log("Test admin logged in");
-  };
-
-  const newUser = {
-    username: "tester",
-    email: "tester@test.com",
-    password: "tester123",
-  };
-
-  const existingUser = {
-    username: "existingTester",
-    email: "existing@test.com",
-    password: "existing123",
   };
 
   beforeAll(async () => {
@@ -42,7 +30,6 @@ describe("Auth API Test", () => {
         await bcrypt.hash(existingUser.password, 10),
       ],
     );
-    console.log("Test admin created");
   });
 
   afterAll(async () => {
@@ -51,17 +38,24 @@ describe("Auth API Test", () => {
     ]);
     await pool.query(`DELETE FROM admin WHERE email = $1`, [newUser.email]);
     await pool.end();
-
-    console.log("Deleted test admins");
   });
 
   /*
    * Register API Endpoint
    * 201 on success
-   * 400 on email already
-   * 400 on username already
+   *
+   * 400 on username not a string
+   * 400 on username greater than 50 characters
+   * 400 on email not a string
+   * 400 on email greater than 100 characters
+   * 400 on invalid email format
+   * 400 on password not a string
+   *
+   * 400 on email already registered
+   * 400 on username already registered
+   *
    * 401 on register without admin login
-  */
+   */
 
   describe("POST /api/admin/register", () => {
     beforeAll(loginExistingUser);
@@ -71,6 +65,108 @@ describe("Auth API Test", () => {
 
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty("message", "Admin added");
+    });
+
+    test("400 on username not a string", async () => {
+      const res = await agent.post("/api/admin/register").send({
+        ...newUser,
+        username: true,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Username must be a string",
+          path: "username",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on username greater than 50 characters", async () => {
+      const res = await agent.post("/api/admin/register").send({
+        ...newUser,
+        username: "a".repeat(51),
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Username must be within 50 characters",
+          path: "username",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on email not a string", async () => {
+      const res = await agent.post("/api/admin/register").send({
+        ...newUser,
+        email: 10,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Email must be a string",
+          path: "email",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on email greater than 100 characters", async () => {
+      const res = await agent.post("/api/admin/register").send({
+        ...newUser,
+        email: "a".repeat(80) + "@" + "b".repeat(20) + ".com",
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Email must be within 100 characters",
+          path: "email",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on invalid email format", async () => {
+      const res = await agent.post("/api/admin/register").send({
+        ...newUser,
+        email: "nopeNotAnEmail",
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Invalid email format",
+          path: "email",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on password not a string", async () => {
+      const res = await agent.post("/api/admin/register").send({
+        ...newUser,
+        password: false,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Password must be a string",
+          path: "password",
+          location: "body",
+        }),
+      );
     });
 
     test("400 on email already registered", async () => {
@@ -107,8 +203,12 @@ describe("Auth API Test", () => {
   /*
    * Login API Endpoint
    * 201 on success
+   *
+   * 400 on username not a string
+   * 400 on password not a string
+   *
    * 401 on invalid credentials
-  */
+   */
 
   describe("POST /api/admin/login", () => {
     test("200 on successful login", async () => {
@@ -119,6 +219,40 @@ describe("Auth API Test", () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("message", "Logged in");
+    });
+
+    test("400 on username not a string", async () => {
+      const res = await supertest(app).post("/api/admin/login").send({
+        username: true,
+        password: existingUser.password,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Username must be a string",
+          path: "username",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on password not a string", async () => {
+      const res = await supertest(app).post("/api/admin/login").send({
+        username: existingUser.username,
+        password: true,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Password must be a string",
+          path: "password",
+          location: "body",
+        }),
+      );
     });
 
     test("401 on invalid credentials", async () => {
@@ -136,7 +270,7 @@ describe("Auth API Test", () => {
    * Logout API Endpoint
    * 201 on success
    * 401 on logout without admin login
-  */
+   */
 
   describe("GET /api/admin/logout", () => {
     test("200 on successful logout", async () => {
@@ -156,15 +290,15 @@ describe("Auth API Test", () => {
    * Delete API Endpoint
    * 204 on successful admin account delete
    * 401 on delete without admin login
-  */
+   */
 
-  describe("POST /api/admin/delete", () => {
+  describe("DELETE /api/admin/delete", () => {
     beforeAll(loginExistingUser);
 
     test("204 on successful delete", async () => {
-      const res = await agent.delete("/api/admin/delete")
+      const res = await agent.delete("/api/admin/delete");
 
-      expect(res.statusCode).toEqual(204)
+      expect(res.statusCode).toEqual(204);
     });
 
     test("401 on delete without admin login", async () => {

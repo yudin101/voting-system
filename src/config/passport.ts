@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import pool from "./db";
 import bcrypt from "bcrypt";
-import { Admin } from "../types/passport";
+import { Admin } from "../types/admin";
 
 export default passport.use(
   new Strategy(async (username, password, done) => {
