@@ -85,3 +85,27 @@ export const logoutAdmin = async (
     next(err);
   }
 };
+
+export const deleteAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const adminId = req.user?.id;
+
+    await pool.query(`DELETE FROM admin WHERE id = $1`, [adminId]);
+
+    req.session.destroy((err) => {
+      if (err) {
+        throw err;
+      }
+
+      res.clearCookie("connect.sid").sendStatus(204);
+      return;
+    });
+  } catch (err) {
+    console.error(`Error during admin delete: ${err}`);
+    next(err);
+  }
+};

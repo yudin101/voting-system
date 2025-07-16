@@ -45,4 +45,6 @@ router.post(
 
 router.get("/logout", checkAdmin, authController.logoutAdmin);
 
+router.delete("/delete", checkAdmin, authController.deleteAdmin);
+
 export default router;

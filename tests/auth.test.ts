@@ -6,6 +6,20 @@ import bcrypt from "bcrypt";
 describe("Auth API Test", () => {
   let agent: SuperAgentTest & ReturnType<typeof supertest.agent>;
 
+  const loginExistingUser = async (): Promise<void> => {
+    agent = supertest.agent(app) as SuperAgentTest &
+      ReturnType<typeof supertest.agent>;
+
+    await agent
+      .post("/api/admin/login")
+      .send({
+        username: existingUser.username,
+        password: existingUser.password,
+      })
+      .expect(200);
+    console.log("Test admin logged in");
+  };
+
   const newUser = {
     username: "tester",
     email: "tester@test.com",
@@ -42,27 +56,15 @@ describe("Auth API Test", () => {
   });
 
   /*
-    * Register API Endpoint
-    * 201 on success
-    * 400 on email already
-    * 400 on username already
-    * 401 on register without admin login
+   * Register API Endpoint
+   * 201 on success
+   * 400 on email already
+   * 400 on username already
+   * 401 on register without admin login
   */
 
   describe("POST /api/admin/register", () => {
-    beforeAll(async () => {
-      agent = supertest.agent(app) as SuperAgentTest &
-        ReturnType<typeof supertest.agent>;
-
-      await agent
-        .post("/api/admin/login")
-        .send({
-          username: existingUser.username,
-          password: existingUser.password,
-        })
-        .expect(200);
-      console.log("Test admin logged in");
-    });
+    beforeAll(loginExistingUser);
 
     test("201 on successful registration", async () => {
       const res = await agent.post("/api/admin/register").send(newUser);
@@ -103,9 +105,9 @@ describe("Auth API Test", () => {
   });
 
   /*
-    * Login API Endpoint
-    * 201 on success
-    * 401 on invalid credentials
+   * Login API Endpoint
+   * 201 on success
+   * 401 on invalid credentials
   */
 
   describe("POST /api/admin/login", () => {
@@ -130,11 +132,10 @@ describe("Auth API Test", () => {
     });
   });
 
-
   /*
-    * Logout API Endpoint
-    * 201 on success
-    * 401 on logout without admin login
+   * Logout API Endpoint
+   * 201 on success
+   * 401 on logout without admin login
   */
 
   describe("GET /api/admin/logout", () => {
@@ -146,6 +147,28 @@ describe("Auth API Test", () => {
 
     test("401 on logout without admin login", async () => {
       const res = await supertest(app).get("/api/admin/logout");
+      expect(res.statusCode).toEqual(401);
+      expect(res.body).toHaveProperty("error", "Unauthorized");
+    });
+  });
+
+  /*
+   * Delete API Endpoint
+   * 204 on successful admin account delete
+   * 401 on delete without admin login
+  */
+
+  describe("POST /api/admin/delete", () => {
+    beforeAll(loginExistingUser);
+
+    test("204 on successful delete", async () => {
+      const res = await agent.delete("/api/admin/delete")
+
+      expect(res.statusCode).toEqual(204)
+    });
+
+    test("401 on delete without admin login", async () => {
+      const res = await supertest(app).delete("/api/admin/delete");
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });
