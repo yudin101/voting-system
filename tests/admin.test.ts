@@ -1,31 +1,26 @@
 import supertest, { SuperAgentTest } from "supertest";
 import pool from "../src/config/db";
-import { existingUser, newUser } from "./constants";
+import { existingAdmin, newAdmin } from "./constants";
 import bcrypt from "bcrypt";
 import app from "../src/app";
 
 describe("Admin Info API", () => {
   let agent: SuperAgentTest & ReturnType<typeof supertest.agent>;
 
-  const { password: existingUserPassword, ...existingUserNoPassword } =
-    existingUser;
-  const { password: newUserPassword, ...newUserNoPassword } = newUser;
+  const { password: existingAdminPassword, ...existingAdminNoPassword } =
+    existingAdmin;
+  const { password: newAdminPassword, ...newAdminNoPassword } = newAdmin;
 
   beforeAll(async () => {
     await pool.query(
       `INSERT INTO admin (id, username, email, password)
       VALUES 
-        ($1, $2, $3, $4),
-        ($5, $6, $7, $8)`,
+        ($1, $2, $3, $4)`,
       [
-        existingUser.id,
-        existingUser.username,
-        existingUser.email,
-        await bcrypt.hash(existingUser.password, 10),
-        newUser.id,
-        newUser.username,
-        newUser.email,
-        await bcrypt.hash(newUser.password, 10),
+        newAdmin.id,
+        newAdmin.username,
+        newAdmin.email,
+        await bcrypt.hash(newAdmin.password, 10),
       ],
     );
 
@@ -35,18 +30,10 @@ describe("Admin Info API", () => {
     await agent
       .post("/api/admin/login")
       .send({
-        username: existingUser.username,
-        password: existingUser.password,
+        username: existingAdmin.username,
+        password: existingAdmin.password,
       })
       .expect(200);
-  });
-
-  afterAll(async () => {
-    await pool.query(`DELETE FROM admin WHERE email = $1`, [
-      existingUser.email,
-    ]);
-    await pool.query(`DELETE FROM admin WHERE email = $1`, [newUser.email]);
-    await pool.end();
   });
 
   /*
@@ -68,26 +55,26 @@ describe("Admin Info API", () => {
 
   describe("GET /api/admin/info", () => {
     test("200 on get info by ID", async () => {
-      const res = await agent.get(`/api/admin/info?id=${existingUser.id}`);
+      const res = await agent.get(`/api/admin/info?id=${existingAdmin.id}`);
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty("admin", existingUserNoPassword);
+      expect(res.body).toHaveProperty("admin", existingAdminNoPassword);
     });
 
     test("200 on get info by username", async () => {
       const res = await agent.get(
-        `/api/admin/info?username=${newUser.username}`,
+        `/api/admin/info?username=${newAdmin.username}`,
       );
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty("admin", newUserNoPassword);
+      expect(res.body).toHaveProperty("admin", newAdminNoPassword);
     });
 
     test("200 on get info by email", async () => {
-      const res = await agent.get(`/api/admin/info?email=${newUser.email}`);
+      const res = await agent.get(`/api/admin/info?email=${newAdmin.email}`);
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty("admin", newUserNoPassword);
+      expect(res.body).toHaveProperty("admin", newAdminNoPassword);
     });
 
     test("400 on invalid email format", async () => {
@@ -136,7 +123,7 @@ describe("Admin Info API", () => {
 
     test("401 on info request without login", async () => {
       const res = await supertest(app).get(
-        `/api/admin/info?username=${existingUser.username}`,
+        `/api/admin/info?username=${existingAdmin.username}`,
       );
 
       expect(res.statusCode).toEqual(401);

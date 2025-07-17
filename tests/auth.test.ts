@@ -1,44 +1,22 @@
 import supertest, { SuperAgentTest } from "supertest";
 import app from "../src/app";
-import pool from "../src/config/db";
-import bcrypt from "bcrypt";
-import { newUser, existingUser } from "./constants";
+import { newAdmin, existingAdmin } from "./constants";
 
 describe("Auth API", () => {
   let agent: SuperAgentTest & ReturnType<typeof supertest.agent>;
 
-  const loginExistingUser = async (): Promise<void> => {
+  const loginExistingAdmin = async (): Promise<void> => {
     agent = supertest.agent(app) as SuperAgentTest &
       ReturnType<typeof supertest.agent>;
 
     await agent
       .post("/api/admin/login")
       .send({
-        username: existingUser.username,
-        password: existingUser.password,
+        username: existingAdmin.username,
+        password: existingAdmin.password,
       })
       .expect(200);
   };
-
-  beforeAll(async () => {
-    await pool.query(
-      `INSERT INTO admin (username, email, password)
-      VALUES ($1, $2, $3)`,
-      [
-        existingUser.username,
-        existingUser.email,
-        await bcrypt.hash(existingUser.password, 10),
-      ],
-    );
-  });
-
-  afterAll(async () => {
-    await pool.query(`DELETE FROM admin WHERE email = $1`, [
-      existingUser.email,
-    ]);
-    await pool.query(`DELETE FROM admin WHERE email = $1`, [newUser.email]);
-    await pool.end();
-  });
 
   /*
    * Register API Endpoint
@@ -58,10 +36,10 @@ describe("Auth API", () => {
    */
 
   describe("POST /api/admin/register", () => {
-    beforeAll(loginExistingUser);
+    beforeAll(loginExistingAdmin);
 
     test("201 on successful registration", async () => {
-      const res = await agent.post("/api/admin/register").send(newUser);
+      const res = await agent.post("/api/admin/register").send(newAdmin);
 
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty("message", "Admin added");
@@ -69,7 +47,7 @@ describe("Auth API", () => {
 
     test("400 on username not a string", async () => {
       const res = await agent.post("/api/admin/register").send({
-        ...newUser,
+        ...newAdmin,
         username: true,
       });
 
@@ -86,7 +64,7 @@ describe("Auth API", () => {
 
     test("400 on username greater than 50 characters", async () => {
       const res = await agent.post("/api/admin/register").send({
-        ...newUser,
+        ...newAdmin,
         username: "a".repeat(51),
       });
 
@@ -103,7 +81,7 @@ describe("Auth API", () => {
 
     test("400 on email not a string", async () => {
       const res = await agent.post("/api/admin/register").send({
-        ...newUser,
+        ...newAdmin,
         email: 10,
       });
 
@@ -120,7 +98,7 @@ describe("Auth API", () => {
 
     test("400 on email greater than 100 characters", async () => {
       const res = await agent.post("/api/admin/register").send({
-        ...newUser,
+        ...newAdmin,
         email: "a".repeat(80) + "@" + "b".repeat(20) + ".com",
       });
 
@@ -137,7 +115,7 @@ describe("Auth API", () => {
 
     test("400 on invalid email format", async () => {
       const res = await agent.post("/api/admin/register").send({
-        ...newUser,
+        ...newAdmin,
         email: "nopeNotAnEmail",
       });
 
@@ -154,7 +132,7 @@ describe("Auth API", () => {
 
     test("400 on password not a string", async () => {
       const res = await agent.post("/api/admin/register").send({
-        ...newUser,
+        ...newAdmin,
         password: false,
       });
 
@@ -172,8 +150,8 @@ describe("Auth API", () => {
     test("400 on email already registered", async () => {
       const res = await agent.post("/api/admin/register").send({
         username: "sthelse",
-        email: existingUser.email,
-        password: existingUser.password,
+        email: existingAdmin.email,
+        password: existingAdmin.password,
       });
 
       expect(res.statusCode).toEqual(400);
@@ -182,9 +160,9 @@ describe("Auth API", () => {
 
     test("400 on username already registered", async () => {
       const res = await agent.post("/api/admin/register").send({
-        username: existingUser.username,
+        username: existingAdmin.username,
         email: "anything@test.com",
-        password: existingUser.password,
+        password: existingAdmin.password,
       });
 
       expect(res.statusCode).toEqual(400);
@@ -194,7 +172,7 @@ describe("Auth API", () => {
     test("401 on register without admin login", async () => {
       const res = await supertest(app)
         .post("/api/admin/register")
-        .send(newUser);
+        .send(newAdmin);
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });
@@ -213,8 +191,8 @@ describe("Auth API", () => {
   describe("POST /api/admin/login", () => {
     test("200 on successful login", async () => {
       const res = await supertest(app).post("/api/admin/login").send({
-        username: existingUser.username,
-        password: existingUser.password,
+        username: existingAdmin.username,
+        password: existingAdmin.password,
       });
 
       expect(res.statusCode).toEqual(200);
@@ -224,7 +202,7 @@ describe("Auth API", () => {
     test("400 on username not a string", async () => {
       const res = await supertest(app).post("/api/admin/login").send({
         username: true,
-        password: existingUser.password,
+        password: existingAdmin.password,
       });
 
       expect(res.statusCode).toEqual(400);
@@ -240,7 +218,7 @@ describe("Auth API", () => {
 
     test("400 on password not a string", async () => {
       const res = await supertest(app).post("/api/admin/login").send({
-        username: existingUser.username,
+        username: existingAdmin.username,
         password: true,
       });
 
@@ -257,7 +235,7 @@ describe("Auth API", () => {
 
     test("401 on invalid credentials", async () => {
       const res = await supertest(app).post("/api/admin/login").send({
-        username: existingUser.username,
+        username: existingAdmin.username,
         password: "somethingelse",
       });
 
@@ -293,7 +271,7 @@ describe("Auth API", () => {
    */
 
   describe("DELETE /api/admin/delete", () => {
-    beforeAll(loginExistingUser);
+    beforeAll(loginExistingAdmin);
 
     test("204 on successful delete", async () => {
       const res = await agent.delete("/api/admin/delete");
