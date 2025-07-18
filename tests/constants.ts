@@ -17,16 +17,16 @@ export const newAdmin: Admin = {
 
 export const existingVoter: Voter = {
   id: 1,
-  firstName: "Steve",
-  lastName: "Rogers",
+  first_name: "Steve",
+  last_name: "Rogers",
   username: "captain",
   email: "captain@test.com"
 }
 
 export const newVoter: Voter = {
   id: 2,
-  firstName: "Stephen",
-  lastName: "Strange",
+  first_name: "Stephen",
+  last_name: "Strange",
   username: "drstrange",
   email: "drstrange@test.com"
 }

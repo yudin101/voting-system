@@ -36,17 +36,19 @@ describe("Auth API", () => {
    */
 
   describe("POST /api/admin/register", () => {
+    const apiUrl = "/api/admin/register";
+
     beforeAll(loginExistingAdmin);
 
     test("201 on successful registration", async () => {
-      const res = await agent.post("/api/admin/register").send(newAdmin);
+      const res = await agent.post(apiUrl).send(newAdmin);
 
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty("message", "Admin added");
     });
 
     test("400 on username not a string", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         ...newAdmin,
         username: true,
       });
@@ -63,7 +65,7 @@ describe("Auth API", () => {
     });
 
     test("400 on username greater than 50 characters", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         ...newAdmin,
         username: "a".repeat(51),
       });
@@ -80,7 +82,7 @@ describe("Auth API", () => {
     });
 
     test("400 on email not a string", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         ...newAdmin,
         email: 10,
       });
@@ -97,7 +99,7 @@ describe("Auth API", () => {
     });
 
     test("400 on email greater than 100 characters", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         ...newAdmin,
         email: "a".repeat(80) + "@" + "b".repeat(20) + ".com",
       });
@@ -114,7 +116,7 @@ describe("Auth API", () => {
     });
 
     test("400 on invalid email format", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         ...newAdmin,
         email: "nopeNotAnEmail",
       });
@@ -131,7 +133,7 @@ describe("Auth API", () => {
     });
 
     test("400 on password not a string", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         ...newAdmin,
         password: false,
       });
@@ -148,7 +150,7 @@ describe("Auth API", () => {
     });
 
     test("400 on email already registered", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         username: "sthelse",
         email: existingAdmin.email,
         password: existingAdmin.password,
@@ -159,7 +161,7 @@ describe("Auth API", () => {
     });
 
     test("400 on username already registered", async () => {
-      const res = await agent.post("/api/admin/register").send({
+      const res = await agent.post(apiUrl).send({
         username: existingAdmin.username,
         email: "anything@test.com",
         password: existingAdmin.password,
@@ -170,9 +172,7 @@ describe("Auth API", () => {
     });
 
     test("401 on register without admin login", async () => {
-      const res = await supertest(app)
-        .post("/api/admin/register")
-        .send(newAdmin);
+      const res = await supertest(app).post(apiUrl).send(newAdmin);
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });
@@ -189,8 +189,10 @@ describe("Auth API", () => {
    */
 
   describe("POST /api/admin/login", () => {
+    const apiUrl = "/api/admin/login";
+
     test("200 on successful login", async () => {
-      const res = await supertest(app).post("/api/admin/login").send({
+      const res = await supertest(app).post(apiUrl).send({
         username: existingAdmin.username,
         password: existingAdmin.password,
       });
@@ -200,7 +202,7 @@ describe("Auth API", () => {
     });
 
     test("400 on username not a string", async () => {
-      const res = await supertest(app).post("/api/admin/login").send({
+      const res = await supertest(app).post(apiUrl).send({
         username: true,
         password: existingAdmin.password,
       });
@@ -217,7 +219,7 @@ describe("Auth API", () => {
     });
 
     test("400 on password not a string", async () => {
-      const res = await supertest(app).post("/api/admin/login").send({
+      const res = await supertest(app).post(apiUrl).send({
         username: existingAdmin.username,
         password: true,
       });
@@ -234,7 +236,7 @@ describe("Auth API", () => {
     });
 
     test("401 on invalid credentials", async () => {
-      const res = await supertest(app).post("/api/admin/login").send({
+      const res = await supertest(app).post(apiUrl).send({
         username: existingAdmin.username,
         password: "somethingelse",
       });
@@ -251,14 +253,16 @@ describe("Auth API", () => {
    */
 
   describe("GET /api/admin/logout", () => {
+    const apiUrl = "/api/admin/logout";
+
     test("200 on successful logout", async () => {
-      const res = await agent.get("/api/admin/logout");
+      const res = await agent.get(apiUrl);
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("message", "Logged out");
     });
 
     test("401 on logout without admin login", async () => {
-      const res = await supertest(app).get("/api/admin/logout");
+      const res = await supertest(app).get(apiUrl);
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });
@@ -271,16 +275,18 @@ describe("Auth API", () => {
    */
 
   describe("DELETE /api/admin/delete", () => {
+    const apiUrl = "/api/admin/delete";
+
     beforeAll(loginExistingAdmin);
 
     test("204 on successful delete", async () => {
-      const res = await agent.delete("/api/admin/delete");
+      const res = await agent.delete(apiUrl);
 
       expect(res.statusCode).toEqual(204);
     });
 
     test("401 on delete without admin login", async () => {
-      const res = await supertest(app).delete("/api/admin/delete");
+      const res = await supertest(app).delete(apiUrl);
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });

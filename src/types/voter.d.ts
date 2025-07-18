@@ -1,8 +1,8 @@
 export interface Voter {
   id: number;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
   username: string;
   email: string;
 }

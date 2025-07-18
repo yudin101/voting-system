@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 
 beforeAll(async () => {
   jest.spyOn(console, "log").mockImplementation(() => { });
+  jest.spyOn(console, "error").mockRestore?.();
 
   await pool.query(
     `INSERT INTO admin (id, username, email, password)
@@ -21,8 +22,8 @@ beforeAll(async () => {
     VALUES ($1, $2, $3, $4, $5)`,
     [
       existingVoter.id,
-      existingVoter.firstName,
-      existingVoter.lastName,
+      existingVoter.first_name,
+      existingVoter.last_name,
       existingVoter.username,
       existingVoter.email,
     ],
@@ -36,7 +37,7 @@ afterAll(async () => {
   await pool.query(`DELETE FROM admin WHERE email = $1`, [newAdmin.email]);
 
   await pool.query(`DELETE FROM voter WHERE email = $1`, [existingVoter.email]);
-  await pool.query(`DELETE FROM admin WHERE email = $1`, [newVoter.email]);
+  await pool.query(`DELETE FROM voter WHERE email = $1`, [newVoter.email]);
 
   await pool.end();
 });

@@ -54,8 +54,10 @@ describe("Admin Info API", () => {
    */
 
   describe("GET /api/admin/info", () => {
+    const apiUrl = "/api/admin/info"
+
     test("200 on get info by ID", async () => {
-      const res = await agent.get(`/api/admin/info?id=${existingAdmin.id}`);
+      const res = await agent.get(`${apiUrl}?id=${existingAdmin.id}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("admin", existingAdminNoPassword);
@@ -63,7 +65,7 @@ describe("Admin Info API", () => {
 
     test("200 on get info by username", async () => {
       const res = await agent.get(
-        `/api/admin/info?username=${newAdmin.username}`,
+        `${apiUrl}?username=${newAdmin.username}`,
       );
 
       expect(res.statusCode).toEqual(200);
@@ -71,14 +73,14 @@ describe("Admin Info API", () => {
     });
 
     test("200 on get info by email", async () => {
-      const res = await agent.get(`/api/admin/info?email=${newAdmin.email}`);
+      const res = await agent.get(`${apiUrl}?email=${newAdmin.email}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("admin", newAdminNoPassword);
     });
 
     test("400 on invalid email format", async () => {
-      const res = await agent.get(`/api/admin/info?email=NopeNotAnEmail`);
+      const res = await agent.get(`${apiUrl}?email=NopeNotAnEmail`);
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty("error");
@@ -92,7 +94,7 @@ describe("Admin Info API", () => {
     });
 
     test("404 on admin not found with id", async () => {
-      const res = await agent.get(`/api/admin/info?id=342`);
+      const res = await agent.get(`${apiUrl}?id=342`);
 
       expect(res.statusCode).toEqual(404);
       expect(res.body).toHaveProperty("error", "Not Found");
@@ -100,7 +102,7 @@ describe("Admin Info API", () => {
 
     test("404 on admin not found with username", async () => {
       const res = await agent.get(
-        `/api/admin/info?username=somenonexistingusername`,
+        `${apiUrl}?username=somenonexistingusername`,
       );
 
       expect(res.statusCode).toEqual(404);
@@ -108,14 +110,14 @@ describe("Admin Info API", () => {
     });
 
     test("404 on admin not found with email", async () => {
-      const res = await agent.get(`/api/admin/info?email=notreal@nope.com`);
+      const res = await agent.get(`${apiUrl}?email=notreal@nope.com`);
 
       expect(res.statusCode).toEqual(404);
       expect(res.body).toHaveProperty("error", "Not Found");
     });
 
     test("400 on missing parameters", async () => {
-      const res = await agent.get(`/api/admin/info`);
+      const res = await agent.get(apiUrl);
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty("error", "Missing query parameters");
@@ -123,7 +125,7 @@ describe("Admin Info API", () => {
 
     test("401 on info request without login", async () => {
       const res = await supertest(app).get(
-        `/api/admin/info?username=${existingAdmin.username}`,
+        `${apiUrl}?username=${existingAdmin.username}`,
       );
 
       expect(res.statusCode).toEqual(401);
