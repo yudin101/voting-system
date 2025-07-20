@@ -6,6 +6,7 @@ import { checkAdmin } from "../middlewares/checkAdmin.middleware";
 import {
   addVoterValidation,
   checkVoterValidation,
+  updateVoterValidation,
 } from "../validators/voter.validators";
 
 const router = Router();
@@ -24,6 +25,14 @@ router.get(
   validate,
   checkAdmin,
   voterController.checkVoter,
+);
+
+router.patch(
+  "/update/:username",
+  checkSchema(updateVoterValidation),
+  validate,
+  checkAdmin,
+  voterController.updateVoter,
 );
 
 export default router;

@@ -1,6 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import { matchedData } from "express-validator";
 import pool from "../config/db";
+import { Voter } from "../types/voter";
+
+const checkVoterExists = async (
+  column: (string | number)[],
+): Promise<false | Voter> => {
+  const fieldName = column[0];
+  const check = await pool.query(
+    `SELECT * FROM voter WHERE ${fieldName} = $1`,
+    [column[1]],
+  );
+
+  if (check.rows.length > 0) {
+    return check.rows[0];
+  }
+
+  return false;
+};
 
 export const addVoter = async (
   req: Request,
@@ -16,27 +33,15 @@ export const addVoter = async (
       username,
     } = matchedData(req);
 
-    const checkEmail = await pool.query(
-      `SELECT * FROM voter WHERE email = $1`,
-      [email],
-    );
-
-    if (checkEmail.rows.length > 0) {
+    if (await checkVoterExists(["email", email])) {
       res.status(400).json({
         error: "Voter email already exists",
       });
       return;
     }
 
-    const checkUsername = await pool.query(
-      `SELECT * FROM voter WHERE username = $1`,
-      [username],
-    );
-
-    if (checkUsername.rows.length > 0) {
-      res.status(400).json({
-        error: "Voter username already exists",
-      });
+    if (await checkVoterExists(["username", username])) {
+      res.status(400).json({ error: "Voter username already exists" });
       return;
     }
 
@@ -74,34 +79,141 @@ export const checkVoter = async (
     let { id, username, email } = matchedData(req);
     id = parseInt(id);
 
-    let queryText = "SELECT * FROM voter WHERE ";
-    let queryValue: (string | number)[];
+    const columns = [
+      ["id", id],
+      ["username", username],
+      ["email", email],
+    ];
 
-    if (id) {
-      queryText += "id = $1";
-      queryValue = [id];
-    } else if (username) {
-      queryText += "username = $1";
-      queryValue = [username];
-    } else if (email) {
-      queryText += "email = $1";
-      queryValue = [email];
-    } else {
+    let count = 0;
+
+    /*
+     * If none of the variables in the columns array have a value,
+     * count will remain zero
+     */
+
+    for (let i = 0; i < columns.length; i++) {
+      /* Checking if the second index of each array inside columns is defined */
+      if (columns[i][1]) {
+        const voter = await checkVoterExists(columns[i]);
+
+        if (voter) {
+          res.status(200).json({ voter: voter });
+          return;
+        }
+        count++;
+      }
+    }
+
+    if (count === 0) {
       res.status(400).json({ error: "Missing query parameters" });
       return;
     }
 
-    const voterInfo = await pool.query(queryText, queryValue);
+    res.status(404).json({ error: "Voter not found" });
+    return;
+  } catch (err) {
+    console.error(`Error while checking voter: ${err}`);
+    next(err);
+  }
+};
 
-    if (voterInfo.rowCount === 0) {
+export const updateVoter = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { username } = req.params;
+
+    const voter = await checkVoterExists(["username", username]);
+
+    if (!voter) {
       res.status(404).json({ error: "Voter not found" });
       return;
     }
 
-    res.status(200).json({ voter: voterInfo.rows[0] });
+    const voterId = voter.id;
+
+    const {
+      username: newUsername,
+      first_name: newFirstName,
+      middle_name: newMiddleName,
+      last_name: newLastname,
+      email: newEmail,
+    } = matchedData(req);
+
+    const setClauses: string[] = [];
+    const queryValues: (string | number)[] = [voterId];
+    let placeholderCounter = 2;
+
+    if (newUsername) {
+      const checkUsername = await pool.query(
+        `SELECT * FROM voter WHERE username = $1`,
+        [newUsername],
+      );
+
+      if (checkUsername.rows.length > 0) {
+        res.status(400).json({ error: "Voter username already exists" });
+        return;
+      }
+
+      setClauses.push(`username = $${placeholderCounter++}`);
+      queryValues.push(newUsername);
+    }
+
+    if (newFirstName) {
+      setClauses.push(`first_name = $${placeholderCounter++}`);
+      queryValues.push(newFirstName);
+    }
+
+    if (newMiddleName) {
+      setClauses.push(`middle_name = $${placeholderCounter++}`);
+      queryValues.push(newMiddleName);
+    }
+
+    if (newLastname) {
+      setClauses.push(`last_name = $${placeholderCounter++}`);
+      queryValues.push(newLastname);
+    }
+
+    if (newEmail) {
+      const checkEmail = await pool.query(
+        `SELECT * FROM voter WHERE email = $1`,
+        [newEmail],
+      );
+
+      if (checkEmail.rows.length > 0) {
+        res.status(400).json({ error: "Voter email already exists" });
+        return;
+      }
+
+      setClauses.push(`email = $${placeholderCounter++}`);
+      queryValues.push(newEmail);
+    }
+
+    if (setClauses.length === 0) {
+      res.status(400).json({
+        error: "No fields provided",
+      });
+      return;
+    }
+
+    const queryText = `
+        UPDATE voter
+        SET ${setClauses.join(", ")}
+        WHERE id = $1
+        RETURNING id, username, email, first_name, middle_name, last_name; 
+    `;
+
+    const result = await pool.query(queryText, queryValues);
+
+    res.status(200).json({
+      voter: result.rows[0],
+    });
     return;
   } catch (err) {
-    console.error(`Error while checking voter: ${err}`);
+    console.error(`Error while updating voter: ${err}`);
     next(err);
   }
 };

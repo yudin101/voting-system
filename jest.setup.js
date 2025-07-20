@@ -1,5 +1,10 @@
 const { default: pool } = require("./src/config/db");
-const { existingAdmin, newAdmin, existingVoter, newVoter } = require("./tests/constants");
+const {
+  existingAdmin,
+  newAdmin,
+  existingVoter,
+  newVoter,
+} = require("./tests/constants");
 const bcrypt = require("bcrypt");
 
 beforeAll(async () => {
@@ -38,6 +43,7 @@ afterAll(async () => {
 
   await pool.query(`DELETE FROM voter WHERE email = $1`, [existingVoter.email]);
   await pool.query(`DELETE FROM voter WHERE email = $1`, [newVoter.email]);
+  await pool.query(`DELETE FROM voter WHERE email = $1`, ["ohmygod@test.com"]);
 
   await pool.end();
 });
