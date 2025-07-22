@@ -640,4 +640,35 @@ describe("Voter API", () => {
       });
     });
   });
+
+  /*
+   * Voter Delete API Endpoint
+   * 404 on voter not found
+   * 201 on successful deletion 
+   * 401 on delete attempt without login
+   * */
+
+  describe("DELETE /api/voter/delete/:id", () => {
+    const apiUrl = `/api/voter/delete/${existingVoter.id}`
+
+    test("201 on successful deletion", async () => {
+      const res = await agent.delete(apiUrl)
+
+      expect(res.statusCode).toEqual(201)
+    })
+
+    test("404 on voter not found", async () => {
+      const res = await agent.delete(apiUrl)
+
+      expect(res.statusCode).toEqual(404)
+      expect(res.body).toHaveProperty("error", "Voter not found")
+    })
+
+    test("401 on delete attempt without login", async () => {
+      const res = await supertest(app).delete(apiUrl)
+
+      expect(res.statusCode).toEqual(401)
+      expect(res.body).toHaveProperty("error", "Unauthorized")
+    })
+  })
 });

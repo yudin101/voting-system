@@ -217,3 +217,28 @@ export const updateVoter = async (
     next(err);
   }
 };
+
+export const deleteVoter = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const voter = await checkVoterExists(["id", id]);
+
+    if (!voter) {
+      res.status(404).json({ error: "Voter not found" });
+      return;
+    }
+
+    await pool.query(`DELETE FROM voter WHERE id = $1`, [id]);
+
+    res.sendStatus(201);
+    return;
+  } catch (err) {
+    console.error(`Error deleting voter: ${err}`);
+    next(err);
+  }
+};

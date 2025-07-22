@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router } from "express";
 import * as voterController from "../controllers/voter.controller";
 import { checkSchema } from "express-validator";
 import { validate } from "../middlewares/validation.middlewaere";
@@ -34,5 +34,7 @@ router.patch(
   checkAdmin,
   voterController.updateVoter,
 );
+
+router.delete("/delete/:id", checkAdmin, voterController.deleteVoter);
 
 export default router;
