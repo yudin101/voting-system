@@ -21,6 +21,7 @@ export const initializeSchema = async (): Promise<void> => {
       
       CREATE TABLE IF NOT EXISTS candidate (
         id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
         first_name VARCHAR(100) NOT NULL,
         middle_name VARCHAR(100),
         last_name VARCHAR(100) NOT NULL,

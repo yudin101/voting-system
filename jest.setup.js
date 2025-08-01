@@ -4,6 +4,8 @@ const {
   newAdmin,
   existingVoter,
   newVoter,
+  existingCandidate,
+  newCandidate,
 } = require("./tests/constants");
 const bcrypt = require("bcrypt");
 
@@ -33,6 +35,18 @@ beforeAll(async () => {
       existingVoter.email,
     ],
   );
+
+  await pool.query(
+    `INSERT INTO candidate (id, username, first_name, last_name, description)
+    VALUES ($1, $2, $3, $4, $5)`,
+    [
+      existingCandidate.id,
+      existingCandidate.username,
+      existingCandidate.first_name,
+      existingCandidate.last_name,
+      existingCandidate.description,
+    ],
+  );
 });
 
 afterAll(async () => {
@@ -44,6 +58,13 @@ afterAll(async () => {
   await pool.query(`DELETE FROM voter WHERE email = $1`, [existingVoter.email]);
   await pool.query(`DELETE FROM voter WHERE email = $1`, [newVoter.email]);
   await pool.query(`DELETE FROM voter WHERE email = $1`, ["ohmygod@test.com"]);
+
+  await pool.query(`DELETE FROM candidate WHERE username = $1`, [
+    existingCandidate.username,
+  ]);
+  await pool.query(`DELETE FROM candidate WHERE username = $1`, [
+    newCandidate.username,
+  ]);
 
   await pool.end();
 });

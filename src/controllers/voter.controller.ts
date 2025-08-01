@@ -1,23 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { matchedData } from "express-validator";
 import pool from "../config/db";
-import { Voter } from "../types/voter";
-
-const checkVoterExists = async (
-  column: (string | number)[],
-): Promise<false | Voter> => {
-  const fieldName = column[0];
-  const check = await pool.query(
-    `SELECT * FROM voter WHERE ${fieldName} = $1`,
-    [column[1]],
-  );
-
-  if (check.rows.length > 0) {
-    return check.rows[0];
-  }
-
-  return false;
-};
+import checkExists from "../utils/checkExists";
 
 export const addVoter = async (
   req: Request,
@@ -33,14 +17,14 @@ export const addVoter = async (
       username,
     } = matchedData(req);
 
-    if (await checkVoterExists(["email", email])) {
+    if (await checkExists(["voter", "email", email])) {
       res.status(400).json({
         error: "Voter email already exists",
       });
       return;
     }
 
-    if (await checkVoterExists(["username", username])) {
+    if (await checkExists(["voter", "username", username])) {
       res.status(400).json({ error: "Voter username already exists" });
       return;
     }
@@ -79,10 +63,10 @@ export const checkVoter = async (
     let { id, username, email } = matchedData(req);
     id = parseInt(id);
 
-    const columns = [
-      ["id", id],
-      ["username", username],
-      ["email", email],
+    const columns: [string, string, string | number][] = [
+      ["voter", "id", id],
+      ["voter", "username", username],
+      ["voter", "email", email],
     ];
 
     let count = 0;
@@ -94,8 +78,8 @@ export const checkVoter = async (
 
     for (let i = 0; i < columns.length; i++) {
       /* Checking if the second index of each array inside columns is defined */
-      if (columns[i][1]) {
-        const voter = await checkVoterExists(columns[i]);
+      if (columns[i][2]) {
+        const voter = await checkExists(columns[i]);
 
         if (voter) {
           res.status(200).json({ voter: voter });
@@ -126,7 +110,7 @@ export const updateVoter = async (
   try {
     const { username } = req.params;
 
-    const voter = await checkVoterExists(["username", username]);
+    const voter = await checkExists(["voter", "username", username]);
 
     if (!voter) {
       res.status(404).json({ error: "Voter not found" });
@@ -226,7 +210,7 @@ export const deleteVoter = async (
   try {
     const { id } = req.params;
 
-    const voter = await checkVoterExists(["id", id]);
+    const voter = await checkExists(["voter", "id", id]);
 
     if (!voter) {
       res.status(404).json({ error: "Voter not found" });
