@@ -65,6 +65,7 @@ afterAll(async () => {
   await pool.query(`DELETE FROM candidate WHERE username = $1`, [
     newCandidate.username,
   ]);
+  await pool.query(`DELETE FROM candidate WHERE username = $1`, ["somethingnew"])
 
   await pool.end();
 });

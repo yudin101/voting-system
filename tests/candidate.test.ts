@@ -230,4 +230,228 @@ describe("Candidate API", () => {
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });
   });
+
+  /*
+   * Candidate Update API Endpoint
+   * 200 on successful first name update
+   * 200 on successful middle name update
+   * 200 on successful last name update
+   * 200 on successful description update
+   * 200 on successful username update
+   *
+   * 400 on first name not string
+   * 400 on first name longer than 100 characters
+   * 400 on middle name not string
+   * 400 on middle name longer than 100 characters
+   * 400 on last name not string
+   * 400 on last name longer than 100 characters
+   * 400 on username not string
+   * 400 on username longer than 50 characters
+   *
+   * 400 on username already exists
+   *
+   * 404 on candidate not found
+   *
+   * 401 on update attempt without login
+   * */
+
+  describe("PATCH /api/candidate/update/:username", () => {
+    const apiUrl = `/api/candidate/update/${existingCandidate.username}`;
+
+    test("400 on first name not string", async () => {
+      const res = await agent.patch(apiUrl).send({
+        first_name: true,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "First name must be a string",
+          path: "first_name",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on first name longer than 100 characters", async () => {
+      const res = await agent.patch(apiUrl).send({
+        first_name: "a".repeat(101),
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "First name must be within 100 characters",
+          path: "first_name",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on middle name not string", async () => {
+      const res = await agent.patch(apiUrl).send({
+        middle_name: true,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Middle name must be a string",
+          path: "middle_name",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on middle name longer than 100 characters", async () => {
+      const res = await agent.patch(apiUrl).send({
+        middle_name: "a".repeat(101),
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Middle name must be within 100 characters",
+          path: "middle_name",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on last name not string", async () => {
+      const res = await agent.patch(apiUrl).send({
+        last_name: true,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Last name must be a string",
+          path: "last_name",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on last name longer than 100 characters", async () => {
+      const res = await agent.patch(apiUrl).send({
+        last_name: "a".repeat(101),
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Last name must be within 100 characters",
+          path: "last_name",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on username not string", async () => {
+      const res = await agent.patch(apiUrl).send({
+        username: true,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Username must be a string",
+          path: "username",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on username longer than 50 characters", async () => {
+      const res = await agent.patch(apiUrl).send({
+        username: "a".repeat(51),
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error[0]).toEqual(
+        expect.objectContaining({
+          msg: "Username must be within 50 characters",
+          path: "username",
+          location: "body",
+        }),
+      );
+    });
+
+    test("400 on username already exists", async () => {
+      const res = await agent.patch(apiUrl).send({
+        username: existingCandidate.username,
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error", "Username already exists");
+    });
+
+    test("404 on candidate not found", async () => {
+      const res = await agent
+        .patch("/api/candidate/update/thisshouldnotexist")
+        .send({
+          username: "shouldotherwisework",
+        });
+
+      expect(res.statusCode).toEqual(404);
+      expect(res.body).toHaveProperty("error", "Candidate not found");
+    });
+
+    test("401 on update attempt without login", async () => {
+      const res = await supertest(app).patch(apiUrl).send({
+        username: "nonexistent"
+      });
+
+      console.error(res.statusCode)
+      console.error(res.body)
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.body).toHaveProperty("error", "Unauthorized");
+    });
+
+    test("200 on successful first name update", async () => {
+      const res = await agent.patch(apiUrl).send({
+        first_name: "New",
+      });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty("message", "Candidate updated");
+    });
+
+    test("200 on successful middle name update", async () => {
+      const res = await agent.patch(apiUrl).send({
+        middle_name: "Mid",
+      });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty("message", "Candidate updated");
+    });
+
+    test("200 on successful last name update", async () => {
+      const res = await agent.patch(apiUrl).send({
+        last_name: "Last",
+      });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty("message", "Candidate updated");
+    });
+
+    test("200 on successful username update", async () => {
+      const res = await agent.patch(apiUrl).send({
+        username: "somethingnew",
+      });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty("message", "Candidate updated");
+    });
+  });
 });
