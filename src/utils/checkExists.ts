@@ -1,9 +1,10 @@
 import { Voter } from "../types/voter";
 import pool from "../config/db";
+import { Candidate } from "../types/candidate";
 
 const checkExists = async (
   column: [string, string, string | number],
-): Promise<false | Voter> => {
+): Promise<false | Voter | Candidate> => {
   const tableName = column[0];
   const fieldName = column[1];
 

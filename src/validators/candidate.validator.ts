@@ -141,3 +141,22 @@ export const updateCandidateValidation: Schema = {
     },
   },
 };
+
+export const checkCandidateValidation: Schema = {
+  id: {
+    in: ["query"],
+    optional: true,
+    isString: {
+      errorMessage: "ID must be a string",
+    },
+    trim: true,
+  },
+  username: {
+    in: ["query"],
+    optional: true,
+    isString: {
+      errorMessage: "Username must be a string",
+    },
+    trim: true,
+  },
+};

@@ -2,12 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import { matchedData } from "express-validator";
 import checkExists from "../utils/checkExists";
 import pool from "../config/db";
+import { Candidate } from "../types/candidate";
 
 export const addCandidate = async (
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
+): Promise<void> => {
   try {
     const {
       username,
@@ -42,11 +43,15 @@ export const updateCandidate = async (
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
+): Promise<void> => {
   try {
     const { username } = req.params;
 
-    const candidate = await checkExists(["candidate", "username", username]);
+    const candidate = (await checkExists([
+      "candidate",
+      "username",
+      username,
+    ])) as Candidate;
 
     if (!candidate) {
       res.status(404).json({ error: "Candidate not found" });
@@ -111,5 +116,77 @@ export const updateCandidate = async (
   } catch (err) {
     console.error(err);
     next(err);
+  }
+};
+
+export const deleteCandidate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { username } = req.params;
+
+    const candidate = (await checkExists([
+      "candidate",
+      "username",
+      username,
+    ])) as Candidate;
+
+    if (!candidate) {
+      res.status(404).json({ error: "Candidate not found" });
+      return;
+    }
+
+    const candidateId = candidate.id;
+
+    await pool.query(`DELETE FROM candidate WHERE id = $1`, [candidateId]);
+
+    res.sendStatus(201);
+    return;
+  } catch (err) {
+    console.error(err);
+    next();
+  }
+};
+
+export const checkCandidate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    let { id, username } = matchedData(req);
+    id = parseInt(id);
+
+    const columns: [string, string, string | number][] = [
+      ["candidate", "username", username],
+      ["candidate", "id", id],
+    ];
+
+    let count = 0;
+
+    for (let i = 0; i < columns.length; i++) {
+      if (columns[i][2]) {
+        const candidate = await checkExists(columns[i]);
+
+        if (candidate) {
+          res.status(200).json({ candidate: candidate });
+          return;
+        }
+        count++;
+      }
+    }
+
+    if (count === 0) {
+      res.status(400).json({ error: "Missing parameters" });
+      return;
+    }
+
+    res.status(404).json({ error: "Candidate not found" });
+    return;
+  } catch (err) {
+    console.error(err);
+    next();
   }
 };

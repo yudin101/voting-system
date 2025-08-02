@@ -232,6 +232,61 @@ describe("Candidate API", () => {
   });
 
   /*
+   * Candidate Check API Endpoint
+   * 200 on candidate exists with ID
+   * 200 on candidate exisits with username
+   *
+   * 404 on candidate not found with ID
+   * 404 on candidate not found with username
+   *
+   * 400 on missing parameters
+   **/
+
+  describe("GET /api/candidate/check", () => {
+    const apiUrl = "/api/candidate/check";
+
+    test("200 on candidate exists with ID", async () => {
+      const res = await supertest(app).get(
+        apiUrl + `?id=${existingCandidate.id}`,
+      );
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty("candidate");
+      expect(res.body.candidate).toEqual(
+        expect.objectContaining(existingCandidate),
+      );
+    });
+
+    test("200 on candidate exists with username", async () => {
+      const res = await supertest(app).get(
+        apiUrl + `?username=${existingCandidate.username}`,
+      );
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty("candidate");
+      expect(res.body.candidate).toEqual(
+        expect.objectContaining(existingCandidate),
+      );
+    });
+
+    test("404 on candidate not found with ID", async () => {
+      const res = await supertest(app).get(apiUrl + `?id=756`);
+
+      expect(res.statusCode).toEqual(404);
+      expect(res.body).toHaveProperty("error", "Candidate not found");
+    });
+
+    test("404 on candidate not found with username", async () => {
+      const res = await supertest(app).get(
+        apiUrl + `?username=somethingnonexistent`,
+      );
+
+      expect(res.statusCode).toEqual(404);
+      expect(res.body).toHaveProperty("error", "Candidate not found");
+    });
+  });
+
+  /*
    * Candidate Update API Endpoint
    * 200 on successful first name update
    * 200 on successful middle name update
@@ -408,7 +463,7 @@ describe("Candidate API", () => {
 
     test("401 on update attempt without login", async () => {
       const res = await supertest(app).patch(apiUrl).send({
-        username: "nonexistent"
+        username: "nonexistent",
       });
 
       expect(res.statusCode).toEqual(401);
@@ -449,6 +504,38 @@ describe("Candidate API", () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("message", "Candidate updated");
+    });
+  });
+
+  /*
+   * Candidate Delete API Endpoint
+   * 201 on successful delete
+   * 404 on username not found
+   * 401 on delete attempt without login
+   * */
+
+  describe("DELETE /api/candidate/delete/:username", () => {
+    const apirUrl = `/api/candidate/delete/${newCandidate.username}`;
+
+    test("201 on successful delete", async () => {
+      const res = await agent.delete(apirUrl);
+
+      expect(res.statusCode).toEqual(201);
+    });
+
+    test("404 on username not found", async () => {
+      // Using the same username because it will be deleted in the previous test
+      const res = await agent.delete(apirUrl);
+
+      expect(res.statusCode).toEqual(404);
+      expect(res.body).toHaveProperty("error", "Candidate not found");
+    });
+
+    test("401 on delete attempt without login", async () => {
+      const res = await supertest(app).delete(apirUrl);
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.body).toHaveProperty("error", "Unauthorized");
     });
   });
 });
