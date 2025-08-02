@@ -12,17 +12,17 @@ const router = Router();
 
 router.post(
   "/add",
+  checkAdmin,
   checkSchema(addCandidateValidation),
   validate,
-  checkAdmin,
   candidateController.addCandidate,
 );
 
 router.patch(
   "/update/:username",
+  checkAdmin,
   checkSchema(updateCandidateValidation),
   validate,
-  checkAdmin,
   candidateController.updateCandidate,
 );
 

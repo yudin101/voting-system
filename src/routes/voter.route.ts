@@ -13,25 +13,25 @@ const router = Router();
 
 router.post(
   "/add",
+  checkAdmin,
   checkSchema(addVoterValidation),
   validate,
-  checkAdmin,
   voterController.addVoter,
 );
 
 router.get(
   "/check",
+  checkAdmin,
   checkSchema(checkVoterValidation),
   validate,
-  checkAdmin,
   voterController.checkVoter,
 );
 
 router.patch(
   "/update/:username",
+  checkAdmin,
   checkSchema(updateVoterValidation),
   validate,
-  checkAdmin,
   voterController.updateVoter,
 );
 

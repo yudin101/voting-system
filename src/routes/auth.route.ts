@@ -17,9 +17,9 @@ const router = Router();
 
 router.post(
   "/register",
+  checkAdmin,
   checkSchema(registerValidation),
   validate,
-  checkAdmin,
   authController.registerAdmin,
 );
 

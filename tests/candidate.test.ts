@@ -411,9 +411,6 @@ describe("Candidate API", () => {
         username: "nonexistent"
       });
 
-      console.error(res.statusCode)
-      console.error(res.body)
-
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty("error", "Unauthorized");
     });

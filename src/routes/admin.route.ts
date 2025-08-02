@@ -9,9 +9,9 @@ const router = Router();
 
 router.get(
   "/info",
+  checkAdmin,
   checkSchema(getInfoValidation),
   validate,
-  checkAdmin,
   adminController.getAdminInfo,
 );
 
