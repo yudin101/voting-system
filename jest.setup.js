@@ -55,6 +55,11 @@ afterAll(async () => {
   await pool.query(`DELETE FROM admin WHERE email = $1`, [existingAdmin.email]);
   await pool.query(`DELETE FROM admin WHERE email = $1`, [newAdmin.email]);
 
+  await pool.query(`DELETE FROM votes WHERE candidate_id = $1`, [
+    existingCandidate.id,
+  ]);
+  await pool.query(`DELETE FROM votes WHERE voter_id = $1`, [existingVoter.id]);
+
   await pool.query(`DELETE FROM voter WHERE email = $1`, [existingVoter.email]);
   await pool.query(`DELETE FROM voter WHERE email = $1`, [newVoter.email]);
   await pool.query(`DELETE FROM voter WHERE email = $1`, ["ohmygod@test.com"]);
@@ -65,7 +70,9 @@ afterAll(async () => {
   await pool.query(`DELETE FROM candidate WHERE username = $1`, [
     newCandidate.username,
   ]);
-  await pool.query(`DELETE FROM candidate WHERE username = $1`, ["somethingnew"])
+  await pool.query(`DELETE FROM candidate WHERE username = $1`, [
+    "somethingnew",
+  ]);
 
   await pool.end();
 });
