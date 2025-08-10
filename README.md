@@ -40,6 +40,11 @@ npm run dev
 
 ## API Endpoints
 
+- [Admin Endpoints](#admin-endpoints)
+- [Voter Endpoints](#voter-endpoints)
+- [Candidate Endpoints](#candidate-endpoints)
+- [Voting Endpoints](#voting-endpoints)
+
 ### Admin Endpoints
 
 #### `POST /api/admin/register`
